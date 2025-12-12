@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Dashboard</h2>
+    <p>Prism Agent - Real-time visualization and KPIs</p>
+</div>
+
+<div class="dashboard-container">
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-value" id="kpiTotalEvents">-</div>
+            <div class="kpi-label">Total Events</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-value" id="kpiErrorRate">-%</div>
+            <div class="kpi-label">Error Rate</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">💾</div>
+            <div class="kpi-value" id="kpiIngestionSize">- MB</div>
+            <div class="kpi-label">Ingestion Size</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">📁</div>
+            <div class="kpi-value" id="kpiFilesProcessed">-</div>
+            <div class="kpi-label">Files Processed</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>🔴 Errors Over Time</h3>
+            <canvas id="errorsChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h3>📊 Events by Level</h3>
+            <canvas id="levelsChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h3>⚙️ Top Services</h3>
+            <canvas id="servicesChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h3>🕐 Hourly Distribution</h3>
+            <canvas id="hourlyChart"></canvas>
+        </div>
+    </div>
+
+    <div class="agent-status-dashboard">
+        <h3>🤖 Agent Activity Monitor</h3>
+        <div class="agent-grid" id="agentGrid"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let charts = {};
+
+async function loadDashboard() {
+    try {
+        const response = await fetch('/api/dashboard');
+        const data = await response.json();
+        
+        updateKPIs(data.kpis);
+        renderCharts(data.charts);
+        
+        const agentsResponse = await fetch('/api/agents');
+        const agents = await agentsResponse.json();
+        displayAgents(agents);
+    } catch (error) {
+        console.error('Failed to load dashboard:', error);
+    }
+}
+
+function updateKPIs(kpis) {
+    document.getElementById('kpiTotalEvents').textContent = kpis.total_events.toLocaleString();
+    document.getElementById('kpiErrorRate').textContent = kpis.error_rate + '%';
+    document.getElementById('kpiIngestionSize').textContent = kpis.ingestion_size_mb + ' MB';
+    document.getElementById('kpiFilesProcessed').textContent = kpis.files_processed;
+}
+
+function renderCharts(chartData) {
+    // Errors Over Time
+    if (charts.errors) charts.errors.destroy();
+    charts.errors = new Chart(document.getElementById('errorsChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.errors_over_time.labels,
+            datasets: [{
+                label: 'Errors',
+                data: chartData.errors_over_time.data,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {display: false}
+            }
+        }
+    });
+    
+    // Events by Level
+    if (charts.levels) charts.levels.destroy();
+    charts.levels = new Chart(document.getElementById('levelsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: chartData.events_by_level.labels,
+            datasets: [{
+                data: chartData.events_by_level.data,
+                backgroundColor: ['#e74c3c', '#f39c12', '#3498db', '#95a5a6', '#2ecc71']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // Top Services
+    if (charts.services) charts.services.destroy();
+    charts.services = new Chart(document.getElementById('servicesChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.top_services.labels,
+            datasets: [{
+                label: 'Events',
+                data: chartData.top_services.data,
+                backgroundColor: '#3498db'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {display: false}
+            },
+            scales: {
+                x: {ticks: {maxRotation: 45, minRotation: 45}}
+            }
+        }
+    });
+    
+    // Hourly Distribution
+    if (charts.hourly) charts.hourly.destroy();
+    charts.hourly = new Chart(document.getElementById('hourlyChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.hourly_distribution.labels,
+            datasets: [{
+                label: 'Events',
+                data: chartData.hourly_distribution.data,
+                backgroundColor: '#2ecc71'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {display: false}
+            }
+        }
+    });
+}
+
+function displayAgents(agents) {
+    const grid = document.getElementById('agentGrid');
+    grid.innerHTML = '';
+    
+    for (const [name, info] of Object.entries(agents)) {
+        const div = document.createElement('div');
+        div.className = `agent-item agent-${info.status}`;
+        div.innerHTML = `
+            <span class="agent-icon">${info.icon}</span>
+            <div>
+                <strong>${name}</strong>
+                <p>${info.work}</p>
+            </div>
+        `;
+        grid.appendChild(div);
+    }
+}
+
+loadDashboard();
+setInterval(loadDashboard, 30000); // Refresh every 30s
+</script>
+{% endblock %}

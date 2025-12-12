@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Insights & Recommendations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🔐 Insights & Recommendations</h2>
+    <p>Cipher Agent - Advanced analytics and security insights</p>
+</div>
+
+<div class="insights-container" id="insightsContainer">
+    <div class="loading">Loading insights...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadInsights() {
+    try {
+        const response = await fetch('/api/insights');
+        const data = await response.json();
+        
+        if (!data.success) {
+            document.getElementById('insightsContainer').innerHTML = `<div class="error">❌ ${data.reason}</div>`;
+            return;
+        }
+        
+        displayInsights(data);
+    } catch (error) {
+        document.getElementById('insightsContainer').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+    }
+}
+
+function displayInsights(insights) {
+    const container = document.getElementById('insightsContainer');
+    
+    let html = `
+        <div class="insights-hero">
+            <div class="hero-card">
+                <div class="hero-icon">📊</div>
+                <div class="hero-content">
+                    <h2>Error Analysis</h2>
+                    <div class="hero-metric">${insights.error_count.toLocaleString()}</div>
+                    <p>Total Errors Detected</p>
+                    <div class="hero-stat">
+                        <span>Error Rate:</span>
+                        <span class="stat-value ${insights.error_rate > 10 ? 'critical' : 'normal'}">${insights.error_rate}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-card">
+                <div class="hero-icon">🚨</div>
+                <div class="hero-content">
+                    <h2>Anomaly Detection</h2>
+                    <div class="hero-metric">${insights.spikes.length}</div>
+                    <p>Traffic Spikes Detected</p>
+                    ${insights.spikes.length > 0 ? `
+                        <div class="spike-mini-list">
+                            ${insights.spikes.slice(0, 2).map(s => `
+                                <div class="spike-mini-item">
+                                    <span class="spike-count">${s.count}</span>
+                                    <span class="spike-time">${new Date(s.timestamp).toLocaleTimeString()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p class="status-good">✅ No anomalies detected</p>'}
+                </div>
+            </div>
+            
+            <div class="hero-card">
+                <div class="hero-icon">💰</div>
+                <div class="hero-content">
+                    <h2>Cost Optimization</h2>
+                    <div class="hero-metric">5+</div>
+                    <p>Optimization Opportunities</p>
+                    <div class="hero-stat">
+                        <span>Potential Savings:</span>
+                        <span class="stat-value savings">25-40%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="recommendations-modern">
+            <div class="section-header">
+                <h2>💡 Smart Recommendations & Cost Optimization</h2>
+                <p>AI-powered insights to improve performance and reduce costs</p>
+            </div>
+            <div class="recommendations-grid">
+                ${insights.recommendations.map(rec => `
+                    <div class="rec-card priority-${rec.priority.toLowerCase()}">
+                        <div class="rec-icon">${rec.icon}</div>
+                        <div class="rec-content">
+                            <div class="rec-top">
+                                <span class="rec-badge priority-${rec.priority.toLowerCase()}">${rec.priority}</span>
+                                <span class="rec-category">${rec.category}</span>
+                            </div>
+                            <h3>${rec.title}</h3>
+                            <p class="rec-message">${rec.message}</p>
+                            <div class="rec-details">
+                                <div class="rec-detail">
+                                    <span class="detail-label">Impact:</span>
+                                    <span class="detail-value">${rec.impact}</span>
+                                </div>
+                                <div class="rec-detail highlight">
+                                    <span class="detail-label">💵 Cost Impact:</span>
+                                    <span class="detail-value">${rec.cost_impact}</span>
+                                </div>
+                            </div>
+                            <div class="rec-action-box">
+                                <strong>Recommended Action:</strong>
+                                <p>${rec.action}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="insights-grid">
+            <div class="insight-card">
+                <h3>⚙️ Top Services</h3>
+                <div class="top-list">
+                    ${insights.top_services.slice(0, 5).map(s => `
+                        <div class="top-item">
+                            <span class="name">${s.name}</span>
+                            <span class="count">${s.count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="insight-card">
+                <h3>👤 Top Users</h3>
+                <div class="top-list">
+                    ${insights.top_users.slice(0, 5).map(u => `
+                        <div class="top-item">
+                            <span class="name">${u.name}</span>
+                            <span class="count">${u.count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="insight-card">
+                <h3>🌐 Top IP Addresses</h3>
+                <div class="top-list">
+                    ${insights.top_ips.slice(0, 5).map(ip => `
+                        <div class="top-item">
+                            <span class="name">${ip.name}</span>
+                            <span class="count">${ip.count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+        
+        <div class="compliance-section">
+            <h3>✅ Compliance Checks</h3>
+            <div class="compliance-list">
+                ${insights.compliance.map(check => `
+                    <div class="compliance-item status-${check.status.toLowerCase()}">
+                        <span class="check-icon">${check.status === 'PASS' ? '✅' : check.status === 'WARNING' ? '⚠️' : '❌'}</span>
+                        <div>
+                            <strong>${check.name}</strong>
+                            <p>${check.message}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="cloud-comparison-modern">
+            <div class="section-header">
+                <h2>☁️ Cloud Provider Comparison & Real-Time Cost Analysis</h2>
+                <p>Compare logging costs and features across all major cloud platforms (powered by real-time pricing data)</p>
+            </div>
+            <div class="cloud-grid">
+                ${insights.cloud_comparison.map(cloud => `
+                    <div class="cloud-card ${cloud.is_active ? 'active-provider' : 'inactive-provider'}">
+                        ${cloud.is_active ? '<div class="active-badge">✓ YOUR LOGS</div>' : ''}
+                        <div class="cloud-header" style="background: ${cloud.color}">
+                            <span class="cloud-icon">${cloud.icon}</span>
+                            <h3>${cloud.cloud}</h3>
+                        </div>
+                        <div class="cloud-body">
+                            <div class="cloud-stat-row">
+                                <span class="cloud-stat-label">Files Processed</span>
+                                <span class="cloud-stat-value">${cloud.files}</span>
+                            </div>
+                            <div class="cloud-stat-row">
+                                <span class="cloud-stat-label">Events Detected</span>
+                                <span class="cloud-stat-value">${cloud.detected_events}</span>
+                            </div>
+                            <div class="cloud-stat-row">
+                                <span class="cloud-stat-label">Total Size</span>
+                                <span class="cloud-stat-value">${cloud.total_size_mb} MB</span>
+                            </div>
+                            <div class="cloud-stat-row" style="background: #fff3e0; font-weight: bold;">
+                                <span class="cloud-stat-label">Est. Monthly Cost</span>
+                                <span class="cloud-stat-value" style="color: #ff9800;">${cloud.estimated_monthly_cost}</span>
+                            </div>
+                            <div class="cloud-stat-row">
+                                <span class="cloud-stat-label">Ingestion</span>
+                                <span class="cloud-stat-value" style="font-size: 0.9rem;">${cloud.ingestion_cost}</span>
+                            </div>
+                            <div class="cloud-stat-row">
+                                <span class="cloud-stat-label">Storage</span>
+                                <span class="cloud-stat-value" style="font-size: 0.9rem;">${cloud.storage_cost}</span>
+                            </div>
+                            
+                            <div class="cloud-strengths">
+                                <h4>Key Strengths</h4>
+                                ${cloud.strengths.map(s => `
+                                    <div class="cloud-strength-item">
+                                        <span>✓</span>
+                                        <span>${s}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            ${cloud.recommendations && cloud.recommendations.length > 0 ? `
+                                <div class="cloud-recommendations">
+                                    <h4>💡 Recommendations</h4>
+                                    <ul>
+                                        ${cloud.recommendations.map(r => `<li>${r}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="cloud-tip">
+                                <strong>💰 Cost Savings Tip:</strong>
+                                <p>${cloud.cost_tip}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="knowledge-section">
+            <div class="section-header">
+                <h2>📚 Knowledge Articles & Best Practices</h2>
+                <p>Learn from industry experts and optimize your logging strategy</p>
+            </div>
+            <div class="knowledge-grid">
+                ${insights.knowledge_articles.map(article => `
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon">${article.icon}</div>
+                        <div class="knowledge-content">
+                            <div class="knowledge-meta">
+                                <span class="knowledge-category">${article.category}</span>
+                                <span class="knowledge-time">⏱️ ${article.read_time}</span>
+                            </div>
+                            <h3>${article.title}</h3>
+                            <p>${article.summary}</p>
+                            <div class="knowledge-tags">
+                                ${article.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                            </div>
+                            <button class="read-more-btn">Read Article →</button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+loadInsights();
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+===========================================
+LOG ANALYTICS - LAUNCH INSTRUCTIONS
+===========================================
+
+RUNNING THE APPLICATION (Inside Ubuntu Docker Container)
+---------------------------------------------------------
+
+1. Start the Docker container (from Windows host):
+   
+   docker run -it -p 5000:5000 -v C:\Users\ANKIT\log-analytics:/app --name log-analytics-vm ubuntu-python-flask:latest bash
+
+2. Inside the container, navigate to app directory:
+   
+   cd /app
+
+3. Set Flask environment variables:
+   
+   export FLASK_APP=app.py
+   export FLASK_ENV=development
+
+4. Run the Flask application:
+   
+   python -m flask run --host=0.0.0.0 --port=5000
+
+   OR simply:
+   
+   python app.py
+
+ACCESSING THE APPLICATION
+--------------------------
+Open your browser and visit:
+
+Main URL: http://localhost:5000
+
+Available Pages:
+- Dashboard:  http://localhost:5000/dashboard
+- Upload:     http://localhost:5000/upload
+- Status:     http://localhost:5000/status
+- Search:     http://localhost:5000/search
+- Insights:   http://localhost:5000/insights
+
+STOPPING THE APPLICATION
+-------------------------
+Press Ctrl+C in the terminal running Flask
+
+SAMPLE WORKFLOW
+----------------
+1. Go to Upload page
+2. Upload log files (.json, .csv, .log, .txt, .zip)
+3. Go to Status page and click "Build/Refresh Index"
+4. Go to Search page to query logs
+5. Go to Insights page to see recommendations
+6. Go to Dashboard for visualizations
+
+TROUBLESHOOTING
+----------------
+- If port 5000 is busy, change APP_PORT in .env file
+- Ensure all dependencies are installed (pip install -r requirements.txt)
+- Check that data directories exist
+- View Flask logs for error messages
+
+AGENT MONITORING
+----------------
+All pages show active agent status at the bottom.
+Each agent's work is visible in real-time.

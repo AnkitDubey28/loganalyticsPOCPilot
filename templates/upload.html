@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Logs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📤 Upload Logs</h2>
+    <p>Upload log files or import from local folder for analysis</p>
+</div>
+
+<div class="upload-section">
+    <div class="upload-card">
+        <h3>🛡️ Sentinel Agent - File Validation</h3>
+        <p>Drag & drop files or click to browse. Supports .json, .csv, .log, .txt, .zip</p>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" name="files" multiple accept=".json,.csv,.log,.txt,.zip">
+                <label for="fileInput" class="file-input-label">
+                    <span class="upload-icon">📁</span>
+                    <span>Choose Files</span>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload & Process</button>
+        </form>
+
+        <div class="divider">OR</div>
+
+        <button id="importLocalBtn" class="btn btn-secondary">
+            📂 Import from Local Folder
+        </button>
+        <p class="help-text">Imports from: data/incoming/</p>
+    </div>
+
+    <div class="results-card" id="resultsCard" style="display: none;">
+        <h3>Processing Results</h3>
+        <div id="resultsContainer"></div>
+    </div>
+</div>
+
+<div class="agent-status">
+    <h3>🤖 Active Agents</h3>
+    <div class="agent-grid" id="agentGrid">
+        <div class="agent-item">
+            <span class="agent-icon">🛡️</span>
+            <div>
+                <strong>Sentinel</strong>
+                <p>Validating uploads...</p>
+            </div>
+        </div>
+        <div class="agent-item">
+            <span class="agent-icon">📒</span>
+            <div>
+                <strong>Ledger</strong>
+                <p>Recording metadata...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('fileInput').addEventListener('change', (e) => {
+    const files = e.target.files;
+    if (files.length > 0) {
+        const label = e.target.nextElementSibling;
+        label.querySelector('span:last-child').textContent = `${files.length} file(s) selected`;
+    }
+});
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('fileInput');
+    const files = fileInput.files;
+    
+    if (files.length === 0) {
+        alert('Please select at least one file to upload');
+        return;
+    }
+    
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    resultsCard.style.display = 'block';
+    resultsContainer.innerHTML = '<div class="loading">⏳ Processing ' + files.length + ' file(s)...</div>';
+    
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
+        }
+        
+        const data = await response.json();
+        displayResults(data.results);
+        
+        // Reset form
+        e.target.reset();
+        const label = fileInput.nextElementSibling;
+        label.querySelector('span:last-child').textContent = 'Choose Files';
+    } catch (error) {
+        resultsContainer.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+    }
+});
+
+document.getElementById('importLocalBtn').addEventListener('click', async () => {
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    resultsCard.style.display = 'block';
+    resultsContainer.innerHTML = '<div class="loading">Importing files...</div>';
+    
+    try {
+        const response = await fetch('/upload/local', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        displayResults(data.results);
+    } catch (error) {
+        resultsContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+    }
+});
+
+function displayResults(results) {
+    const container = document.getElementById('resultsContainer');
+    
+    if (results.length === 0) {
+        container.innerHTML = '<p>No files processed</p>';
+        return;
+    }
+    
+    const successCount = results.filter(r => r.status === 'success').length;
+    const errorCount = results.filter(r => r.status === 'error' || r.status === 'rejected').length;
+    
+    let html = `
+        <div class="results-summary">
+            <div class="summary-item success">
+                <strong>${successCount}</strong> successful
+            </div>
+            <div class="summary-item error">
+                <strong>${errorCount}</strong> failed
+            </div>
+        </div>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Status</th>
+                    <th>Events</th>
+                    <th>Cloud</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    results.forEach(result => {
+        const statusClass = result.status === 'success' ? 'status-success' : 'status-error';
+        const statusIcon = result.status === 'success' ? '✅' : '❌';
+        const cloudType = result.cloud_type || '-';
+        const events = result.events !== undefined ? result.events : '-';
+        const details = result.reason || result.message || '-';
+        
+        html += `
+            <tr>
+                <td><strong>${result.filename}</strong></td>
+                <td class="${statusClass}">${statusIcon} ${result.status}</td>
+                <td>${events}</td>
+                <td>${cloudType}</td>
+                <td><small>${details}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}

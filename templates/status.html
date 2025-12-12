@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Status{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>⚙️ Processing Status</h2>
+    <p>Monitor file processing and index building</p>
+</div>
+
+<div class="status-section">
+    <div class="status-card">
+        <h3>📒 Ledger - Files Tracked</h3>
+        <table class="status-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Upload Time</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Events</th>
+                    <th>Cloud</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.upload_time }}</td>
+                    <td>{{ (file.size / 1024) | round(2) }} KB</td>
+                    <td class="status-{{ file.status }}">{{ file.status }}</td>
+                    <td>{{ file.event_count }}</td>
+                    <td>{{ file.cloud_type or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="index-card">
+        <h3>🔗 Nexus - Index Status</h3>
+        {% if index_meta %}
+        <div class="index-info">
+            <div class="info-item">
+                <span class="label">Last Build:</span>
+                <span class="value">{{ index_meta.build_time }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Documents:</span>
+                <span class="value">{{ index_meta.doc_count }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Vocabulary Size:</span>
+                <span class="value">{{ index_meta.vocab_size }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Type:</span>
+                <span class="value">{{ index_meta.index_type }}</span>
+            </div>
+        </div>
+        {% else %}
+        <p class="no-index">No index built yet</p>
+        {% endif %}
+        
+        <button id="buildIndexBtn" class="btn btn-primary">🔄 Build/Refresh Index</button>
+        <div id="indexResult" class="result-message"></div>
+    </div>
+</div>
+
+<div class="agent-status">
+    <h3>🤖 Agent Activity</h3>
+    <div class="agent-grid" id="agentActivity"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('buildIndexBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('buildIndexBtn');
+    const result = document.getElementById('indexResult');
+    
+    btn.disabled = true;
+    btn.textContent = '🔄 Building...';
+    result.innerHTML = '<div class="loading">Building index, please wait...</div>';
+    
+    try {
+        const response = await fetch('/index/build', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            result.innerHTML = `<div class="success">✅ Index built successfully! Documents: ${data.doc_count}, Vocabulary: ${data.vocab_size}</div>`;
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            result.innerHTML = `<div class="error">❌ Failed: ${data.reason}</div>`;
+        }
+    } catch (error) {
+        result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Build/Refresh Index';
+    }
+});
+
+// Load agent activity
+async function loadAgentActivity() {
+    try {
+        const response = await fetch('/api/agents');
+        const agents = await response.json();
+        
+        const container = document.getElementById('agentActivity');
+        container.innerHTML = '';
+        
+        for (const [name, info] of Object.entries(agents)) {
+            const div = document.createElement('div');
+            div.className = `agent-item agent-${info.status}`;
+            div.innerHTML = `
+                <span class="agent-icon">${info.icon}</span>
+                <div>
+                    <strong>${name}</strong>
+                    <p>${info.work}</p>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+    } catch (error) {
+        console.error('Failed to load agent activity:', error);
+    }
+}
+
+loadAgentActivity();
+</script>
+{% endblock %}

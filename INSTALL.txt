@@ -1,0 +1,145 @@
+===========================================
+   LOG ANALYTICS PLATFORM - SETUP GUIDE
+===========================================
+
+This project runs directly on Ubuntu servers.
+NO Docker required. NO complex setup.
+
+===========================================
+STEP 1: COPY PROJECT TO UBUNTU SERVER
+===========================================
+
+From your local machine:
+
+  scp -r log-analytics/ user@your-server:/home/user/
+
+Or use FileZilla, WinSCP, or any file transfer tool.
+
+===========================================
+STEP 2: FIRST-TIME SETUP (ONE TIME ONLY)
+===========================================
+
+SSH into your Ubuntu server:
+
+  ssh user@your-server
+  cd log-analytics
+
+Make scripts executable:
+
+  chmod +x *.sh
+
+Run the setup script:
+
+  ./setup.sh
+
+This will:
+- Install Python 3 and pip if missing
+- Install all required Python packages
+- Create necessary directories
+- Set permissions
+
+===========================================
+STEP 3: START THE APPLICATION
+===========================================
+
+Simply run:
+
+  ./start.sh
+
+The application will start in background on port 5000.
+
+Access at: http://localhost:5000
+
+Or from another machine: http://<server-ip>:5000
+
+===========================================
+DAILY USAGE
+===========================================
+
+Start application:
+  ./start.sh
+
+Stop application:
+  ./stop.sh
+
+View logs:
+  tail -f logs/flask.log
+
+Check if running:
+  ps aux | grep "python.*app.py"
+
+===========================================
+TROUBLESHOOTING
+===========================================
+
+Problem: "Python 3 is not installed"
+Solution:
+  sudo apt-get update
+  sudo apt-get install -y python3 python3-pip
+
+Problem: "Port 5000 already in use"
+Solution:
+  sudo lsof -i :5000
+  sudo kill -9 <PID>
+
+Problem: "Permission denied"
+Solution:
+  chmod +x *.sh
+
+Problem: Dependencies not installing
+Solution:
+  pip3 install --user -r requirements.txt
+
+Problem: Can't access from remote machine
+Solution:
+  1. Edit config.py, set APP_HOST = '0.0.0.0'
+  2. sudo ufw allow 5000/tcp
+
+===========================================
+PROJECT STRUCTURE
+===========================================
+
+log-analytics/
+├── setup.sh           # One-time setup script
+├── start.sh           # Start application
+├── stop.sh            # Stop application
+├── app.py             # Main Flask application
+├── config.py          # Configuration
+├── requirements.txt   # Python dependencies
+├── agents/            # Six intelligent agents
+├── templates/         # HTML templates
+├── static/            # CSS, JS files
+├── data/              # Log storage (created by scripts)
+└── logs/              # Application logs (created by scripts)
+
+===========================================
+REQUIREMENTS
+===========================================
+
+- Ubuntu 18.04 or higher
+- Python 3.8 or higher
+- 512 MB RAM minimum
+- 1 GB disk space
+- Port 5000 available
+
+===========================================
+FEATURES
+===========================================
+
+✓ Upload logs (JSON, CSV, TXT, ZIP)
+✓ Automatic cloud provider detection (AWS/Azure/GCP)
+✓ Intelligent search with TF-IDF
+✓ Anomaly detection and recommendations
+✓ Cost analysis and optimization tips
+✓ Real-time cloud pricing comparison
+✓ Interactive dashboards
+✓ Compliance checking
+
+===========================================
+SUPPORT
+===========================================
+
+See QUICKSTART.md for detailed instructions
+See README.md for full documentation
+
+===========================================

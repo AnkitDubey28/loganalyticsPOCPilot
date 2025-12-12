@@ -1,0 +1,68 @@
+===========================================
+LOG ANALYTICS - SETUP INSTRUCTIONS
+===========================================
+
+OVERVIEW
+--------
+This is a non-Docker Python Flask application that analyzes log files using six intelligent agents:
+- Sentinel: File validation
+- Ledger: Metadata tracking
+- Nexus: TF-IDF indexing
+- Oracle: Search and retrieval
+- Cipher: Insights and recommendations
+- Prism: Visualization
+
+INSTALLATION (Ubuntu Docker Container)
+---------------------------------------
+
+1. Start the Ubuntu container with Python 3.11 and Flask 2.2.5:
+   
+   docker run -it -p 5000:5000 -v ${PWD}:/app --name log-analytics-vm ubuntu-python-flask:latest
+
+2. Once inside the container, navigate to the app directory:
+   
+   cd /app/log-analytics
+
+3. Install Python dependencies:
+   
+   pip install -r requirements.txt
+
+4. Create required directories (if not exists):
+   
+   mkdir -p data/raw data/processed data/index data/incoming db
+
+CONFIGURATION
+-------------
+- Edit config.py to adjust paths and limits
+- Set LOGAPP_ROOT environment variable to override default data path
+- Edit .env file for Flask configuration
+
+DIRECTORY STRUCTURE
+-------------------
+log-analytics/
+├── app.py                  # Flask application
+├── config.py               # Configuration
+├── utils.py                # Utility functions
+├── agents/                 # Six agent modules
+│   ├── sentinel.py
+│   ├── ledger.py
+│   ├── nexus.py
+│   ├── oracle.py
+│   ├── cipher.py
+│   └── prism.py
+├── templates/              # HTML templates
+├── static/                 # CSS and JavaScript
+├── data/                   # Data storage
+│   ├── raw/
+│   ├── processed/
+│   ├── index/
+│   └── incoming/
+└── db/                     # SQLite database
+
+NOTES
+-----
+- This is a regular Python project (not a Docker project)
+- We run it inside a Docker container for testing
+- Suitable for Git repository commits
+- All data is stored locally (offline)
+- No cloud dependencies

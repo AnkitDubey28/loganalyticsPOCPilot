@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Search Logs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🔮 Search & Explore</h2>
+    <p>Oracle Agent - Intelligent log search with filters</p>
+</div>
+
+<div class="search-section">
+    <div class="search-card">
+        <form id="searchForm">
+            <div class="search-input-group">
+                <input type="text" id="queryInput" placeholder="Search logs..." class="search-input" required>
+                <button type="submit" class="btn btn-search">🔍 Search</button>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Time Range:</label>
+                    <div class="filter-chips">
+                        <button type="button" class="chip" data-filter="1h">Last Hour</button>
+                        <button type="button" class="chip" data-filter="24h">Last 24h</button>
+                        <button type="button" class="chip" data-filter="7d">Last 7 Days</button>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Level:</label>
+                    <select id="levelFilter" class="filter-select">
+                        <option value="">All Levels</option>
+                        <option value="ERROR">ERROR</option>
+                        <option value="WARN">WARN</option>
+                        <option value="INFO">INFO</option>
+                        <option value="DEBUG">DEBUG</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Service:</label>
+                    <input type="text" id="serviceFilter" placeholder="Service name..." class="filter-input">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="results-section" id="resultsSection" style="display: none;">
+        <div class="results-header">
+            <h3 id="resultsTitle">Search Results</h3>
+            <span id="resultsCount" class="count-badge">0 results</span>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentFilters = {};
+
+document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        
+        const filter = chip.dataset.filter;
+        const now = new Date();
+        
+        if (filter === '1h') {
+            currentFilters.time_from = new Date(now - 3600000).toISOString();
+        } else if (filter === '24h') {
+            currentFilters.time_from = new Date(now - 86400000).toISOString();
+        } else if (filter === '7d') {
+            currentFilters.time_from = new Date(now - 604800000).toISOString();
+        }
+    });
+});
+
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const query = document.getElementById('queryInput').value;
+    const level = document.getElementById('levelFilter').value;
+    const service = document.getElementById('serviceFilter').value;
+    
+    const payload = {
+        query,
+        ...currentFilters
+    };
+    
+    if (level) payload.level = level;
+    if (service) payload.service = service;
+    
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsContainer = document.getElementById('searchResults');
+    
+    resultsSection.style.display = 'block';
+    resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+    
+    try {
+        const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displaySearchResults(data.results);
+            document.getElementById('resultsCount').textContent = `${data.result_count} results`;
+        } else {
+            resultsContainer.innerHTML = `<div class="error">❌ ${data.reason}</div>`;
+        }
+    } catch (error) {
+        resultsContainer.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+    }
+});
+
+function displaySearchResults(results) {
+    const container = document.getElementById('searchResults');
+    
+    if (results.length === 0) {
+        container.innerHTML = '<p class="no-results">No results found</p>';
+        return;
+    }
+    
+    let html = '<div class="search-results-list">';
+    
+    results.forEach(result => {
+        const levelClass = result.level.toLowerCase();
+        html += `
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="score-badge">Score: ${result.score}</span>
+                    <span class="level-badge level-${levelClass}">${result.level}</span>
+                    <span class="timestamp">${result.timestamp}</span>
+                </div>
+                <div class="result-meta">
+                    <span>📁 ${result.file}</span>
+                    ${result.service ? `<span>⚙️ ${result.service}</span>` : ''}
+                    ${result.user ? `<span>👤 ${result.user}</span>` : ''}
+                    ${result.ip ? `<span>🌐 ${result.ip}</span>` : ''}
+                </div>
+                <div class="result-file-link">
+                    <small>Line ${result.line}</small>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}
