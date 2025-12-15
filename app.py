@@ -349,6 +349,52 @@ def api_agents():
         return jsonify({'error': str(e)}), 500
 
 
+
+
+@app.route('/api/plugins', methods=['GET', 'POST'])
+def api_plugins():
+    """Get or create plugin configurations"""
+    if request.method == 'GET':
+        try:
+            plugins = ledger.get_plugins()
+            return jsonify({'plugins': plugins, 'success': True})
+        except Exception as e:
+            return jsonify({'error': str(e), 'success': False}), 500
+    
+    elif request.method == 'POST':
+        try:
+            data = request.json
+            plugin_type = data.get('plugin_type')
+            config = data.get('config', {})
+            
+            # Extract plugin name from config
+            plugin_name = config.get('pluginName') or config.get('webhookName') or config.get('apiName') or config.get('sharepointName') or f"{plugin_type} Plugin"
+            
+            # Store in database
+            plugin_id = ledger.save_plugin(plugin_type, plugin_name, config)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Plugin saved successfully',
+                'plugin_id': plugin_id
+            })
+        except Exception as e:
+            return jsonify({'error': str(e), 'success': False}), 500
+
+
+@app.route('/api/plugins/<int:plugin_id>', methods=['DELETE'])
+def delete_plugin(plugin_id):
+    """Delete a plugin configuration"""
+    try:
+        success = ledger.delete_plugin(plugin_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Plugin deleted successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 def process_file(filename, file_bytes, validation):
     """Process uploaded file based on type"""
     file_type = validation['type']

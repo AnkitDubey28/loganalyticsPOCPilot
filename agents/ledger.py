@@ -169,3 +169,148 @@ class Ledger:
             stats['total_size'] = cursor.fetchone()[0] or 0
             
             return stats
+
+
+    def save_plugin(self, plugin_type, plugin_name, config):
+        """Save plugin configuration"""
+        import json
+        cursor = self.conn.cursor()
+        
+        # Create plugins table if not exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS plugins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plugin_type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                config TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'active'
+            )
+        ''')
+        
+        config_json = json.dumps(config)
+        cursor.execute(
+            "INSERT INTO plugins (plugin_type, name, config) VALUES (?, ?, ?)",
+            (plugin_type, plugin_name, config_json)
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+    
+    def get_plugins(self):
+        """Get all plugin configurations"""
+        import json
+        cursor = self.conn.cursor()
+        
+        # Ensure table exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS plugins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plugin_type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                config TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'active'
+            )
+        ''')
+        
+        cursor.execute(
+            "SELECT id, plugin_type, name, config, created_at, status FROM plugins WHERE status = 'active'"
+        )
+        rows = cursor.fetchall()
+        
+        plugins = []
+        for row in rows:
+            plugins.append({
+                'id': row[0],
+                'plugin_type': row[1],
+                'name': row[2],
+                'config': json.loads(row[3]) if row[3] else {},
+                'created_at': row[4],
+                'status': row[5]
+            })
+        
+        return plugins
+    
+    def delete_plugin(self, plugin_id):
+        """Delete a plugin (soft delete by setting status to deleted)"""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE plugins SET status = 'deleted' WHERE id = ?",
+            (plugin_id,)
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0
+
+
+    def save_plugin(self, plugin_type, plugin_name, config):
+        """Save plugin configuration"""
+        import json
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Create plugins table if not exists
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS plugins (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    plugin_type TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    config TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'active'
+                )
+            ''')
+            
+            config_json = json.dumps(config)
+            cursor.execute(
+                "INSERT INTO plugins (plugin_type, name, config) VALUES (?, ?, ?)",
+                (plugin_type, plugin_name, config_json)
+            )
+            return cursor.lastrowid
+    
+    def get_plugins(self):
+        """Get all plugin configurations"""
+        import json
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Ensure table exists
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS plugins (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    plugin_type TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    config TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'active'
+                )
+            ''')
+            
+            cursor.execute(
+                "SELECT id, plugin_type, name, config, created_at, status FROM plugins WHERE status = 'active'"
+            )
+            rows = cursor.fetchall()
+            
+            plugins = []
+            for row in rows:
+                plugins.append({
+                    'id': row[0],
+                    'plugin_type': row[1],
+                    'name': row[2],
+                    'config': json.loads(row[3]) if row[3] else {},
+                    'created_at': row[4],
+                    'status': row[5]
+                })
+            
+            return plugins
+    
+    def delete_plugin(self, plugin_id):
+        """Delete a plugin (soft delete by setting status to deleted)"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE plugins SET status = 'deleted' WHERE id = ?",
+                (plugin_id,)
+            )
+            return cursor.rowcount > 0
+
+

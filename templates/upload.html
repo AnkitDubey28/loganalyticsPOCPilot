@@ -32,6 +32,125 @@
         <p class="help-text">Imports from: data/incoming/</p>
     </div>
 
+    <!-- NEW PLUGIN CONFIGURATION SECTION -->
+    <div class="upload-card plugin-section">
+        <h3>🔌 Plugin Configuration</h3>
+        <p>Configure data sources: APIs, Webhooks, SharePoint, or Cloud APIs</p>
+        
+        <div class="plugin-tabs">
+            <button class="plugin-tab active" data-tab="cloud-api">☁️ Cloud API</button>
+            <button class="plugin-tab" data-tab="webhook">🔗 Webhook</button>
+            <button class="plugin-tab" data-tab="api">🌐 REST API</button>
+            <button class="plugin-tab" data-tab="sharepoint">📎 SharePoint</button>
+        </div>
+
+        <!-- Cloud API Form -->
+        <form id="cloudApiForm" class="plugin-form active">
+            <div class="form-group">
+                <label for="cloudProvider">Cloud Provider *</label>
+                <select id="cloudProvider" name="cloudProvider" required>
+                    <option value="">Select Cloud Provider</option>
+                    <option value="aws">AWS</option>
+                    <option value="azure">Azure</option>
+                    <option value="gcp">GCP</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div id="cloudSpecificFields"></div>
+
+            <div class="form-group">
+                <label for="cloudPluginName">Plugin Name *</label>
+                <input type="text" id="cloudPluginName" name="pluginName" placeholder="e.g., AWS Production Logs" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">💾 Save Cloud API Plugin</button>
+        </form>
+
+        <!-- Webhook Form -->
+        <form id="webhookForm" class="plugin-form">
+            <div class="form-group">
+                <label for="webhookName">Webhook Name *</label>
+                <input type="text" id="webhookName" name="webhookName" placeholder="e.g., CloudWatch Webhook" required>
+            </div>
+            <div class="form-group">
+                <label for="webhookUrl">Webhook URL *</label>
+                <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://example.com/webhook" required>
+            </div>
+            <div class="form-group">
+                <label for="webhookSecret">Secret/Token</label>
+                <input type="password" id="webhookSecret" name="webhookSecret" placeholder="Optional authentication token">
+            </div>
+            <div class="form-group">
+                <label for="webhookMethod">HTTP Method *</label>
+                <select id="webhookMethod" name="webhookMethod" required>
+                    <option value="POST">POST</option>
+                    <option value="GET">GET</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save Webhook Plugin</button>
+        </form>
+
+        <!-- REST API Form -->
+        <form id="apiForm" class="plugin-form">
+            <div class="form-group">
+                <label for="apiName">API Name *</label>
+                <input type="text" id="apiName" name="apiName" placeholder="e.g., Splunk API" required>
+            </div>
+            <div class="form-group">
+                <label for="apiEndpoint">API Endpoint *</label>
+                <input type="url" id="apiEndpoint" name="apiEndpoint" placeholder="https://api.example.com/logs" required>
+            </div>
+            <div class="form-group">
+                <label for="apiKey">API Key *</label>
+                <input type="password" id="apiKey" name="apiKey" placeholder="Your API key" required>
+            </div>
+            <div class="form-group">
+                <label for="apiMethod">HTTP Method *</label>
+                <select id="apiMethod" name="apiMethod" required>
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save API Plugin</button>
+        </form>
+
+        <!-- SharePoint Form -->
+        <form id="sharepointForm" class="plugin-form">
+            <div class="form-group">
+                <label for="sharepointName">SharePoint Name *</label>
+                <input type="text" id="sharepointName" name="sharepointName" placeholder="e.g., Log Documents" required>
+            </div>
+            <div class="form-group">
+                <label for="sharepointUrl">SharePoint Site URL *</label>
+                <input type="url" id="sharepointUrl" name="sharepointUrl" placeholder="https://company.sharepoint.com/sites/logs" required>
+            </div>
+            <div class="form-group">
+                <label for="sharepointFolder">Folder Path *</label>
+                <input type="text" id="sharepointFolder" name="sharepointFolder" placeholder="/Shared Documents/Logs" required>
+            </div>
+            <div class="form-group">
+                <label for="sharepointClientId">Client ID *</label>
+                <input type="text" id="sharepointClientId" name="sharepointClientId" placeholder="Azure AD Client ID" required>
+            </div>
+            <div class="form-group">
+                <label for="sharepointSecret">Client Secret *</label>
+                <input type="password" id="sharepointSecret" name="sharepointSecret" placeholder="Azure AD Client Secret" required>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save SharePoint Plugin</button>
+        </form>
+
+        <div id="pluginMessage" class="plugin-message" style="display: none;"></div>
+    </div>
+
+    <!-- Configured Plugins List -->
+    <div class="upload-card">
+        <h3>📋 Configured Plugins</h3>
+        <div id="pluginsList">
+            <p class="loading">Loading plugins...</p>
+        </div>
+    </div>
+
     <div class="results-card" id="resultsCard" style="display: none;">
         <h3>Processing Results</h3>
         <div id="resultsContainer"></div>
@@ -61,6 +180,252 @@
 
 {% block scripts %}
 <script>
+// Cloud-specific field templates
+const cloudFields = {
+    aws: `
+        <div class="form-group">
+            <label for="awsAccessKey">AWS Access Key ID *</label>
+            <input type="text" id="awsAccessKey" name="awsAccessKey" placeholder="AKIAIOSFODNN7EXAMPLE" required>
+        </div>
+        <div class="form-group">
+            <label for="awsSecretKey">AWS Secret Access Key *</label>
+            <input type="password" id="awsSecretKey" name="awsSecretKey" placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" required>
+        </div>
+        <div class="form-group">
+            <label for="awsRegion">AWS Region *</label>
+            <select id="awsRegion" name="awsRegion" required>
+                <option value="us-east-1">US East (N. Virginia)</option>
+                <option value="us-west-2">US West (Oregon)</option>
+                <option value="eu-west-1">EU (Ireland)</option>
+                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="awsService">AWS Service *</label>
+            <select id="awsService" name="awsService" required>
+                <option value="cloudwatch">CloudWatch Logs</option>
+                <option value="s3">S3 Bucket</option>
+                <option value="cloudtrail">CloudTrail</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="awsLogGroup">Log Group/Bucket Name *</label>
+            <input type="text" id="awsLogGroup" name="awsLogGroup" placeholder="/aws/lambda/my-function" required>
+        </div>
+    `,
+    azure: `
+        <div class="form-group">
+            <label for="azureSubscriptionId">Subscription ID *</label>
+            <input type="text" id="azureSubscriptionId" name="azureSubscriptionId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+        </div>
+        <div class="form-group">
+            <label for="azureTenantId">Tenant ID *</label>
+            <input type="text" id="azureTenantId" name="azureTenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+        </div>
+        <div class="form-group">
+            <label for="azureClientId">Client ID *</label>
+            <input type="text" id="azureClientId" name="azureClientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+        </div>
+        <div class="form-group">
+            <label for="azureClientSecret">Client Secret *</label>
+            <input type="password" id="azureClientSecret" name="azureClientSecret" placeholder="Your client secret" required>
+        </div>
+        <div class="form-group">
+            <label for="azureService">Azure Service *</label>
+            <select id="azureService" name="azureService" required>
+                <option value="monitor">Azure Monitor</option>
+                <option value="storage">Storage Account</option>
+                <option value="eventhub">Event Hub</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="azureResourceGroup">Resource Group *</label>
+            <input type="text" id="azureResourceGroup" name="azureResourceGroup" placeholder="my-resource-group" required>
+        </div>
+    `,
+    gcp: `
+        <div class="form-group">
+            <label for="gcpProjectId">GCP Project ID *</label>
+            <input type="text" id="gcpProjectId" name="gcpProjectId" placeholder="my-project-123456" required>
+        </div>
+        <div class="form-group">
+            <label for="gcpServiceAccount">Service Account Email *</label>
+            <input type="email" id="gcpServiceAccount" name="gcpServiceAccount" placeholder="service@project.iam.gserviceaccount.com" required>
+        </div>
+        <div class="form-group">
+            <label for="gcpPrivateKey">Private Key (JSON) *</label>
+            <textarea id="gcpPrivateKey" name="gcpPrivateKey" rows="4" placeholder="Paste your service account JSON key" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="gcpService">GCP Service *</label>
+            <select id="gcpService" name="gcpService" required>
+                <option value="logging">Cloud Logging</option>
+                <option value="storage">Cloud Storage</option>
+                <option value="pubsub">Pub/Sub</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="gcpLogName">Log Name/Bucket *</label>
+            <input type="text" id="gcpLogName" name="gcpLogName" placeholder="projects/my-project/logs/my-log" required>
+        </div>
+    `,
+    other: `
+        <div class="form-group">
+            <label for="otherApiEndpoint">API Endpoint *</label>
+            <input type="url" id="otherApiEndpoint" name="otherApiEndpoint" placeholder="https://api.cloudprovider.com/logs" required>
+        </div>
+        <div class="form-group">
+            <label for="otherAuthType">Authentication Type *</label>
+            <select id="otherAuthType" name="otherAuthType" required>
+                <option value="bearer">Bearer Token</option>
+                <option value="basic">Basic Auth</option>
+                <option value="apikey">API Key</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="otherCredentials">Credentials *</label>
+            <input type="password" id="otherCredentials" name="otherCredentials" placeholder="Your token/key" required>
+        </div>
+    `
+};
+
+// Tab switching
+document.querySelectorAll('.plugin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.plugin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.plugin-form').forEach(f => f.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab.replace('-', '') + 'Form').classList.add('active');
+    });
+});
+
+// Cloud provider change handler
+document.getElementById('cloudProvider').addEventListener('change', (e) => {
+    const provider = e.target.value;
+    const fieldsContainer = document.getElementById('cloudSpecificFields');
+    fieldsContainer.innerHTML = provider ? cloudFields[provider] : '';
+});
+
+// Form submission handlers
+async function submitPlugin(formData, pluginType) {
+    try {
+        const response = await fetch('/api/plugins', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                plugin_type: pluginType,
+                config: Object.fromEntries(formData.entries())
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showMessage('✅ Plugin saved successfully!', 'success');
+            loadPlugins();
+            return true;
+        } else {
+            showMessage('❌ Error: ' + data.error, 'error');
+            return false;
+        }
+    } catch (error) {
+        showMessage('❌ Error: ' + error.message, 'error');
+        return false;
+    }
+}
+
+document.getElementById('cloudApiForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (await submitPlugin(new FormData(e.target), 'cloud-api')) {
+        e.target.reset();
+        document.getElementById('cloudSpecificFields').innerHTML = '';
+    }
+});
+
+document.getElementById('webhookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (await submitPlugin(new FormData(e.target), 'webhook')) e.target.reset();
+});
+
+document.getElementById('apiForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (await submitPlugin(new FormData(e.target), 'api')) e.target.reset();
+});
+
+document.getElementById('sharepointForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (await submitPlugin(new FormData(e.target), 'sharepoint')) e.target.reset();
+});
+
+function showMessage(message, type) {
+    const msgDiv = document.getElementById('pluginMessage');
+    msgDiv.textContent = message;
+    msgDiv.className = 'plugin-message ' + type;
+    msgDiv.style.display = 'block';
+    setTimeout(() => msgDiv.style.display = 'none', 5000);
+}
+
+async function loadPlugins() {
+    try {
+        const response = await fetch('/api/plugins');
+        const data = await response.json();
+        displayPlugins(data.plugins || []);
+    } catch (error) {
+        document.getElementById('pluginsList').innerHTML = '<p class="error">Failed to load plugins</p>';
+    }
+}
+
+function displayPlugins(plugins) {
+    const container = document.getElementById('pluginsList');
+    if (plugins.length === 0) {
+        container.innerHTML = '<p>No plugins configured yet.</p>';
+        return;
+    }
+    
+    let html = '<div class="plugins-grid">';
+    plugins.forEach(plugin => {
+        const typeIcon = {
+            'cloud-api': '☁️',
+            'webhook': '🔗',
+            'api': '🌐',
+            'sharepoint': '📎'
+        }[plugin.plugin_type] || '🔌';
+        
+        html += `
+            <div class="plugin-card">
+                <div class="plugin-header">
+                    <span class="plugin-icon">${typeIcon}</span>
+                    <strong>${plugin.name || plugin.plugin_type}</strong>
+                </div>
+                <div class="plugin-details">
+                    <small>Type: ${plugin.plugin_type}</small><br>
+                    <small>Created: ${new Date(plugin.created_at).toLocaleDateString()}</small>
+                </div>
+                <button class="btn-small btn-danger" onclick="deletePlugin(${plugin.id})">Delete</button>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+async function deletePlugin(id) {
+    if (!confirm('Are you sure you want to delete this plugin?')) return;
+    try {
+        const response = await fetch(`/api/plugins/${id}`, {method: 'DELETE'});
+        const data = await response.json();
+        if (data.success) {
+            showMessage('✅ Plugin deleted successfully!', 'success');
+            loadPlugins();
+        }
+    } catch (error) {
+        showMessage('❌ Error deleting plugin', 'error');
+    }
+}
+
+// Load plugins on page load
+loadPlugins();
+
+// Original upload functionality
 document.getElementById('fileInput').addEventListener('change', (e) => {
     const files = e.target.files;
     if (files.length > 0) {
@@ -71,41 +436,39 @@ document.getElementById('fileInput').addEventListener('change', (e) => {
 
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const fileInput = document.getElementById('fileInput');
     const files = fileInput.files;
-    
+
     if (files.length === 0) {
         alert('Please select at least one file to upload');
         return;
     }
-    
+
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
     }
-    
+
     const resultsCard = document.getElementById('resultsCard');
     const resultsContainer = document.getElementById('resultsContainer');
-    
+
     resultsCard.style.display = 'block';
     resultsContainer.innerHTML = '<div class="loading">⏳ Processing ' + files.length + ' file(s)...</div>';
-    
+
     try {
         const response = await fetch('/upload', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || 'Upload failed');
         }
-        
+
         const data = await response.json();
         displayResults(data.results);
-        
-        // Reset form
+
         e.target.reset();
         const label = fileInput.nextElementSibling;
         label.querySelector('span:last-child').textContent = 'Choose Files';
@@ -117,15 +480,15 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
 document.getElementById('importLocalBtn').addEventListener('click', async () => {
     const resultsCard = document.getElementById('resultsCard');
     const resultsContainer = document.getElementById('resultsContainer');
-    
+
     resultsCard.style.display = 'block';
     resultsContainer.innerHTML = '<div class="loading">Importing files...</div>';
-    
+
     try {
         const response = await fetch('/upload/local', {
             method: 'POST'
         });
-        
+
         const data = await response.json();
         displayResults(data.results);
     } catch (error) {
@@ -135,15 +498,15 @@ document.getElementById('importLocalBtn').addEventListener('click', async () => 
 
 function displayResults(results) {
     const container = document.getElementById('resultsContainer');
-    
+
     if (results.length === 0) {
         container.innerHTML = '<p>No files processed</p>';
         return;
     }
-    
+
     const successCount = results.filter(r => r.status === 'success').length;
     const errorCount = results.filter(r => r.status === 'error' || r.status === 'rejected').length;
-    
+
     let html = `
         <div class="results-summary">
             <div class="summary-item success">
@@ -165,14 +528,14 @@ function displayResults(results) {
             </thead>
             <tbody>
     `;
-    
+
     results.forEach(result => {
         const statusClass = result.status === 'success' ? 'status-success' : 'status-error';
         const statusIcon = result.status === 'success' ? '✅' : '❌';
         const cloudType = result.cloud_type || '-';
         const events = result.events !== undefined ? result.events : '-';
         const details = result.reason || result.message || '-';
-        
+
         html += `
             <tr>
                 <td><strong>${result.filename}</strong></td>
@@ -183,7 +546,7 @@ function displayResults(results) {
             </tr>
         `;
     });
-    
+
     html += '</tbody></table>';
     container.innerHTML = html;
 }
