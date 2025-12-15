@@ -1249,3 +1249,12 @@ body {
     color: #dc3545;
     font-weight: 500;
 }
+
+/* Tagline styling */
+.tagline {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 5px 0 0 0;
+    font-style: italic;
+}
