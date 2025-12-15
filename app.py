@@ -217,6 +217,28 @@ def status():
     return render_template('status.html', files=files, index_meta=index_meta)
 
 
+@app.route('/view-file/<filename>')
+def view_file(filename):
+    """View raw log file content"""
+    import os
+    raw_path = os.path.join(config.RAW_DIR, filename)
+    processed_path = os.path.join(config.PROCESSED_DIR, filename)
+    file_path = None
+    if os.path.exists(raw_path):
+        file_path = raw_path
+    elif os.path.exists(processed_path):
+        file_path = processed_path
+    if file_path:
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            return render_template('view_file.html', filename=filename, content=content)
+        except Exception as e:
+            return jsonify({'error': f'Failed to read file: {str(e)}'}), 500
+    return jsonify({'error': 'File not found'}), 404
+
+
+
 @app.route('/index/build', methods=['POST'])
 def build_index():
     """Build/refresh index with Nexus"""
@@ -286,6 +308,33 @@ def api_dashboard():
     try:
         data = prism.get_dashboard_data()
         return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/api/files')
+def api_files():
+    """Get list of all tracked files"""
+    try:
+        files = ledger.list_files()
+        return jsonify({'files': files})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/index/status')
+def api_index_status():
+    """Get index build status"""
+    try:
+        index_meta = ledger.get_latest_index_meta()
+        exists = index_meta is not None
+        last_build = index_meta.get('build_time') if index_meta else None
+        return jsonify({
+            'exists': exists,
+            'last_build': last_build,
+            'doc_count': index_meta.get('doc_count', 0) if index_meta else 0
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

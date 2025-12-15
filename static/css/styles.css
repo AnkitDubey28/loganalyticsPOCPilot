@@ -1081,6 +1081,84 @@ body {
     50% { opacity: 0.7; }
 }
 
+/* HCLTech Logo */
+.hcltech-logo {
+    height: 40px;
+    width: auto;
+    margin-right: 15px;
+    filter: brightness(0) invert(1);
+}
+
+/* Filters Container */
+.filters-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn-small {
+    padding: 0.75rem 1.5rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-small:hover {
+    background: #5a6268;
+}
+
+/* File Link */
+.file-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.file-link:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
 /* Footer */
 .footer {
     background: var(--dark);
@@ -1088,4 +1166,86 @@ body {
     text-align: center;
     padding: 2rem;
     margin-top: 4rem;
+}
+
+/* Filters Container */
+.filters-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-input, .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    min-width: 150px;
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.filter-info {
+    padding: 10px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.file-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.file-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.status-success {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-warning {
+    color: #ffc107;
+    font-weight: 500;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: 500;
 }

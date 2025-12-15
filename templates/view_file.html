@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}View File - {{ filename }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>📄 File Viewer</h2>
+    <div class="card">
+        <div class="card-header">
+            <h3>{{ filename }}</h3>
+            <a href="/status" class="btn-secondary">← Back to Status</a>
+        </div>
+        <div class="card-body">
+            <pre class="log-content">{{ content }}</pre>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-content {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 20px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.card-header h3 {
+    margin: 0;
+    flex: 1;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+{% endblock %}
