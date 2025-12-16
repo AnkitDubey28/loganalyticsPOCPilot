@@ -94,16 +94,16 @@
         <!-- REST API Form -->
         <form id="apiForm" class="plugin-form">
             <div class="form-group">
-                <label for="apiName">API Name *</label>
-                <input type="text" id="apiName" name="apiName" placeholder="e.g., Splunk API" required>
+                <label for="apiName">Data Source Name *</label>
+                <input type="text" id="apiName" name="apiName" placeholder="e.g., Production Logs Storage" required>
             </div>
             <div class="form-group">
-                <label for="apiEndpoint">API Endpoint *</label>
-                <input type="url" id="apiEndpoint" name="apiEndpoint" placeholder="https://api.example.com/logs" required>
+                <label for="apiEndpoint">Data Source URL *</label>
+                <input type="url" id="apiEndpoint" name="apiEndpoint" placeholder="https://your-storage-url.com/logs/file.log" required>
             </div>
             <div class="form-group">
-                <label for="apiKey">API Key *</label>
-                <input type="password" id="apiKey" name="apiKey" placeholder="Your API key" required>
+                <label for="apiKey">Access Token/Key *</label>
+                <input type="password" id="apiKey" name="apiKey" placeholder="SAS token or Access key (optional)">
             </div>
             <div class="form-group">
                 <label for="apiMethod">HTTP Method *</label>
@@ -391,7 +391,7 @@ function displayPlugins(plugins) {
         }[plugin.plugin_type] || '🔌';
         
         html += `
-            <div class="plugin-card">
+            <div class="plugin-card" id="plugin-card-${plugin.id}">
                 <div class="plugin-header">
                     <span class="plugin-icon">${typeIcon}</span>
                     <strong>${plugin.name || plugin.plugin_type}</strong>
@@ -400,7 +400,16 @@ function displayPlugins(plugins) {
                     <small>Type: ${plugin.plugin_type}</small><br>
                     <small>Created: ${new Date(plugin.created_at).toLocaleDateString()}</small>
                 </div>
-                <button class="btn-small btn-danger" onclick="deletePlugin(${plugin.id})">Delete</button>
+                <div class="plugin-progress" id="progress-${plugin.id}" style="display:none;">
+                    <div class="progress-bar-small">
+                        <div class="progress-fill-small" id="progress-bar-${plugin.id}"></div>
+                    </div>
+                    <small id="progress-text-${plugin.id}">0% - Initializing...</small>
+                </div>
+                <div class="plugin-actions">
+                    <button class="btn-small btn-primary" onclick="executePlugin(${plugin.id})">📥 Fetch Data</button>
+                    <button class="btn-small btn-danger" onclick="deletePlugin(${plugin.id})">Delete</button>
+                </div>
             </div>
         `;
     });
@@ -550,5 +559,73 @@ function displayResults(results) {
     html += '</tbody></table>';
     container.innerHTML = html;
 }
+
+async function executePlugin(pluginId) {
+    const progressDiv = document.getElementById(`progress-${pluginId}`);
+    const progressBar = document.getElementById(`progress-bar-${pluginId}`);
+    const progressText = document.getElementById(`progress-text-${pluginId}`);
+    
+    progressDiv.style.display = 'block';
+    progressText.textContent = '0% - Starting...';
+    progressBar.style.width = '0%';
+    
+    try {
+        // Start plugin execution
+        const response = await fetch(`/api/plugins/${pluginId}/execute`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            showMessage('❌ Error: ' + data.error, 'error');
+            progressDiv.style.display = 'none';
+            return;
+        }
+        
+        const executionId = data.execution_id;
+        
+        // Poll for progress
+        const pollInterval = setInterval(async () => {
+            try {
+                const progressResponse = await fetch(`/api/plugins/progress/${executionId}`);
+                const progressData = await progressResponse.json();
+                
+                const percent = progressData.percent || 0;
+                const message = progressData.message || 'Processing...';
+                
+                progressBar.style.width = percent + '%';
+                progressText.textContent = `${percent}% - ${message}`;
+                
+                if (progressData.done) {
+                    clearInterval(pollInterval);
+                    
+                    if (progressData.result && progressData.result.success) {
+                        const events = progressData.events || 0;
+                        const filename = progressData.filename || 'unknown';
+                        showMessage(`✅ Success! Fetched and processed ${events} events from ${filename}`, 'success');
+                        
+                        setTimeout(() => {
+                            progressDiv.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        const error = progressData.result?.error || progressData.error || 'Unknown error';
+                        showMessage(`❌ Failed: ${error}`, 'error');
+                        progressDiv.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                clearInterval(pollInterval);
+                showMessage('❌ Error checking progress', 'error');
+                progressDiv.style.display = 'none';
+            }
+        }, 500);
+        
+    } catch (error) {
+        showMessage('❌ Error: ' + error.message, 'error');
+        progressDiv.style.display = 'none';
+    }
+}
+
 </script>
 {% endblock %}

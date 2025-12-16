@@ -395,6 +395,112 @@ def delete_plugin(plugin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+
+
+# Plugin execution progress storage
+plugin_progress = {}
+
+@app.route('/api/plugins/<int:plugin_id>/execute', methods=['POST'])
+def execute_plugin_route(plugin_id):
+    """Execute a plugin to fetch data"""
+    try:
+        from agents import plugin_executor
+        import threading
+        import uuid
+        
+        # Get plugin config
+        plugins = ledger.get_plugins()
+        plugin = next((p for p in plugins if p['id'] == plugin_id), None)
+        
+        if not plugin:
+            return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+        
+        # Generate execution ID
+        exec_id = str(uuid.uuid4())
+        plugin_progress[exec_id] = {'percent': 0, 'message': 'Initializing...', 'done': False}
+        
+        def progress_callback(percent, message):
+            plugin_progress[exec_id] = {
+                'percent': percent,
+                'message': message,
+                'done': percent >= 100
+            }
+        
+        def execute_in_thread():
+            result = plugin_executor.execute_plugin(
+                plugin_id,
+                plugin['plugin_type'],
+                plugin['config'],
+                progress_callback
+            )
+            
+            plugin_progress[exec_id]['result'] = result
+            plugin_progress[exec_id]['done'] = True
+            
+            # If successful, save the fetched data as a file
+            if result.get('success'):
+                try:
+                    import os
+                    from datetime import datetime
+                    
+                    content = result.get('content', '')
+                    filename = f"plugin_{plugin_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+                    
+                    # Save to raw directory
+                    raw_path = os.path.join(config.RAW_DIR, filename)
+                    with open(raw_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    
+                    # Process the file
+                    file_bytes = content.encode('utf-8')
+                    from agents import sentinel
+                    validation = sentinel.validate(filename, file_bytes)
+                    
+                    if validation['valid']:
+                        events = process_file(filename, file_bytes, validation)
+                        ledger.record_file(
+                            filename,
+                            len(file_bytes),
+                            validation['type'],
+                            validation.get('cloud_type'),
+                            'processed',
+                            len(events)
+                        )
+                        
+                        for event in events:
+                            ledger.record_event(filename, event)
+                        
+                        plugin_progress[exec_id]['filename'] = filename
+                        plugin_progress[exec_id]['events'] = len(events)
+                    
+                except Exception as e:
+                    plugin_progress[exec_id]['error'] = f'Failed to process: {str(e)}'
+        
+        # Start execution in background thread
+        thread = threading.Thread(target=execute_in_thread)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'execution_id': exec_id,
+            'message': 'Plugin execution started'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/plugins/progress/<execution_id>')
+def get_plugin_progress(execution_id):
+    """Get plugin execution progress"""
+    if execution_id not in plugin_progress:
+        return jsonify({'error': 'Execution not found'}), 404
+    
+    progress_data = plugin_progress[execution_id]
+    return jsonify(progress_data)
+
+
 def process_file(filename, file_bytes, validation):
     """Process uploaded file based on type"""
     file_type = validation['type']
