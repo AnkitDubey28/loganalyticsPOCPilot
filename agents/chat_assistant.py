@@ -165,12 +165,15 @@ class ChatAssistant:
                 response += f"<code style='font-size: 12px;'>{top_error[0]}</code><br>"
                 response += f"<em>This appears {top_error[1]} times</em><br>"
             
-            # Recommendations
+            # Recommendations with links
             response += "<br><strong>💡 My Recommendations:</strong><br>"
             if len(top_services) > 0 and top_services[0][1] > len(error_events) * 0.5:
                 response += f"&nbsp;&nbsp;• Focus on <strong>{top_services[0][0]}</strong> - it's generating most errors<br>"
-            response += f"&nbsp;&nbsp;• Use the Search page to investigate specific error messages<br>"
-            response += f"&nbsp;&nbsp;• Check the Dashboard for error trends over time<br>"
+            
+            # Add link to search for errors
+            error_search_url = "/search?level=ERROR"
+            response += f"&nbsp;&nbsp;• <a href=\"{error_search_url}\" style=\"color: #667eea; font-weight: bold; text-decoration: none;\">🔗 View all errors in Search page →</a><br>"
+            response += f"&nbsp;&nbsp;• <a href=\"/\" style=\"color: #667eea; font-weight: bold; text-decoration: none;\">📊 Check Dashboard for trends →</a><br>"
             
             return response
             
@@ -213,6 +216,7 @@ class ChatAssistant:
                     response += f" <span style='color: #e74c3c;'>({errors} errors)</span>"
                 response += "<br>"
             
+            response += "<br>💡 <a href=\"/search\" style=\"color: #667eea; font-weight: bold; text-decoration: none;\">🔗 Explore services in Search page →</a><br>"
             response += "<br><em>Want to know more about a specific service? Just ask!</em>"
             return response
             
@@ -239,7 +243,8 @@ class ChatAssistant:
                 response += f"{i}. {emoji} <strong>[{level}]</strong> {service}<br>"
                 response += f"&nbsp;&nbsp;&nbsp;&nbsp;<em>{message}...</em><br>"
             
-            response += "<br>💡 <em>Need to dig deeper? Head to the Search page!</em>"
+            response += "<br>💡 <a href=\"/search\" style=\"color: #667eea; font-weight: bold; text-decoration: none;\">🔗 View more in Search page →</a><br>"
+            response += "<br><em>Need to dig deeper? Just ask me to search for something specific!</em>"
             return response
             
         except Exception as e:
@@ -377,16 +382,107 @@ class ChatAssistant:
         """
     
     def _search_specific_logs(self, query):
-        """Handle specific log search requests"""
-        return """
-            I'd love to search for that! However, I recommend using the <strong>Search page</strong> 
-            for the best experience - it has powerful filters and displays results beautifully.<br><br>
+        """Handle specific log search requests - performs actual search and returns results with links"""
+        try:
+            # Extract search terms from the query
+            search_terms = self._extract_search_terms(query)
             
-            <strong>Quick tip:</strong> Head to Search and try entering your query there. 
-            You'll get instant results with full context!<br><br>
+            if not search_terms:
+                return """
+                    I'd be happy to search for you! What exactly are you looking for?<br><br>
+                    <strong>Try asking:</strong><br>
+                    • "show me authentication logs"<br>
+                    • "find database errors"<br>
+                    • "search for timeout issues"<br>
+                    • "show vm logs"
+                """
             
-            If you need help crafting a search query, just ask me "how to search logs"!
-        """
+            # Search the database
+            all_events = self.ledger.list_events(limit=500)
+            
+            # Filter events that match search terms
+            matching_events = []
+            for event in all_events:
+                message = (event.get('message') or '').lower()
+                service = (event.get('service') or '').lower()
+                level = (event.get('level') or '').lower()
+                
+                # Check if any search term matches
+                for term in search_terms:
+                    if term in message or term in service or term in level:
+                        matching_events.append(event)
+                        break
+            
+            if not matching_events:
+                search_url = f"/search?query={'+'.join(search_terms)}"
+                return f"""
+                    🔍 I searched through all your logs but didn't find any matches for <strong>"{' '.join(search_terms)}"</strong>.<br><br>
+                    
+                    <strong>Suggestions:</strong><br>
+                    • Try different keywords<br>
+                    • Check for typos<br>
+                    • Use the <a href="{search_url}" style="color: #667eea; font-weight: bold;">Search page</a> for advanced filters<br><br>
+                    
+                    What else can I help you find?
+                """
+            
+            # Display top results
+            results_count = len(matching_events)
+            display_count = min(5, results_count)
+            search_url = f"/search?query={'+'.join(search_terms)}"
+            
+            response = f"🎯 <strong>Found {results_count} log entries matching '{' '.join(search_terms)}'</strong><br><br>"
+            response += f"<strong>Top {display_count} Results:</strong><br><br>"
+            
+            for i, event in enumerate(matching_events[:display_count], 1):
+                level = event.get('level', 'INFO')
+                service = event.get('service', 'Unknown')
+                message = event.get('message', 'No message')
+                timestamp = event.get('ts_event', '')
+                event_id = event.get('id', '')
+                
+                # Truncate long messages
+                display_msg = message if len(message) <= 100 else message[:100] + '...'
+                
+                # Level emoji
+                emoji = '🔴' if level == 'ERROR' else '⚠️' if level == 'WARN' else 'ℹ️' if level == 'INFO' else '🐛'
+                
+                response += f"{i}. {emoji} <strong>[{level}]</strong> {service}<br>"
+                response += f"&nbsp;&nbsp;&nbsp;&nbsp;<em>{display_msg}</em><br>"
+                if timestamp:
+                    response += f"&nbsp;&nbsp;&nbsp;&nbsp;<small style='color: #666;'>⏰ {timestamp}</small><br>"
+                response += "<br>"
+            
+            if results_count > display_count:
+                response += f"<br>📄 <strong>Showing {display_count} of {results_count} results.</strong><br>"
+            
+            response += f"<br>💡 <a href=\"{search_url}\" style=\"color: #667eea; font-weight: bold; text-decoration: none;\">🔗 View all results in Search page →</a><br>"
+            response += "<br><em>Need to refine your search? Just ask me for more specific terms!</em>"
+            
+            return response
+            
+        except Exception as e:
+            return f"""
+                Oops! I had trouble searching for that. 😔<br><br>
+                Error: {str(e)}<br><br>
+                Try using the <a href="/search" style="color: #667eea; font-weight: bold;">Search page</a> for advanced search capabilities!
+            """
+    
+    def _extract_search_terms(self, query):
+        """Extract search keywords from user query"""
+        # Remove common question words but keep important terms
+        stop_words = ['show', 'me', 'find', 'search', 'for', 'get', 'display', 'the', 'a', 'an', 'of', 'in', 'to', 'and']
+        
+        # Clean and split query
+        words = query.lower().split()
+        search_terms = [w for w in words if w not in stop_words and len(w) > 1]
+        
+        # If we have "vm" or similar short but important terms, include them
+        if not search_terms:
+            # Fallback: include 2-letter words if nothing else found
+            search_terms = [w for w in words if w not in stop_words]
+        
+        return search_terms
     
     def _show_comprehensive_help(self):
         """Comprehensive help menu"""
