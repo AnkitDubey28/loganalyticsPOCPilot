@@ -1,0 +1,214 @@
+<!-- LogSphere AI Chat Widget - Floating Overlay Component -->
+<div id="chatWidget" class="chat-widget-overlay">
+    <div class="chat-widget-container">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <span class="chat-avatar">🤖</span>
+                <div class="chat-header-info">
+                    <span class="chat-title">LogSphere AI</span>
+                    <span class="chat-subtitle">Always here to help</span>
+                </div>
+            </div>
+            <button class="chat-minimize-btn" onclick="minimizeChat()" title="Minimize">_</button>
+            <button class="chat-close-btn" onclick="closeChat()" title="Close">✕</button>
+        </div>
+        
+        <div class="chat-messages-container" id="chatMessages">
+            <div class="chat-message bot-message">
+                <div class="message-avatar">🤖</div>
+                <div class="message-bubble">
+                    <div class="message-text">
+                        Hey there! 👋 I'm your LogSphere AI assistant.<br><br>
+                        I can help you with:<br>
+                        • <strong>Analyzing logs and errors</strong><br>
+                        • <strong>Understanding your data</strong><br>
+                        • <strong>Navigating the application</strong><br>
+                        • <strong>Answering any questions</strong><br><br>
+                        What would you like to know?
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <input 
+                type="text" 
+                id="chatInput" 
+                class="chat-input-field" 
+                placeholder="Ask me anything..." 
+                onkeypress="if(event.key==='Enter') sendChatMessage()"
+                autocomplete="off"
+            >
+            <button class="chat-send-btn" onclick="sendChatMessage()" title="Send">
+                <span class="send-icon">➤</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Chat Button -->
+<button class="chat-fab-button" id="chatFab" onclick="openChat()" title="Chat with AI">
+    <span class="fab-icon">💬</span>
+    <span class="fab-pulse"></span>
+</button>
+
+<script>
+// Chat widget state and functionality
+let chatState = {
+    isOpen: false,
+    isMinimized: false
+};
+
+function openChat() {
+    const widget = document.getElementById('chatWidget');
+    const fab = document.getElementById('chatFab');
+    
+    widget.style.display = 'flex';
+    fab.style.display = 'none';
+    chatState.isOpen = true;
+    chatState.isMinimized = false;
+    
+    // Focus input
+    setTimeout(() => {
+        document.getElementById('chatInput').focus();
+    }, 300);
+}
+
+function closeChat() {
+    const widget = document.getElementById('chatWidget');
+    const fab = document.getElementById('chatFab');
+    
+    widget.style.display = 'none';
+    fab.style.display = 'flex';
+    chatState.isOpen = false;
+    chatState.isMinimized = false;
+}
+
+function minimizeChat() {
+    const widget = document.getElementById('chatWidget');
+    const container = widget.querySelector('.chat-widget-container');
+    
+    if (chatState.isMinimized) {
+        container.style.height = '600px';
+        chatState.isMinimized = false;
+    } else {
+        container.style.height = '60px';
+        chatState.isMinimized = true;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addChatMessage(message, 'user');
+    input.value = '';
+    
+    // Show typing indicator
+    const typingId = showTypingIndicator();
+    
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        // Remove typing indicator
+        removeTypingIndicator(typingId);
+        
+        // Add bot response
+        if (data.success) {
+            addChatMessage(data.response, 'bot');
+        } else {
+            addChatMessage('Sorry, I encountered an error. Please try again! 😔', 'bot');
+        }
+    } catch (error) {
+        console.error('Chat error:', error);
+        removeTypingIndicator(typingId);
+        addChatMessage('Oops! I couldn\'t connect. Please check your connection and try again.', 'bot');
+    }
+}
+
+function addChatMessage(text, sender) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}-message`;
+    
+    if (sender === 'user') {
+        messageDiv.innerHTML = `
+            <div class="message-bubble user-bubble">
+                <div class="message-text">${escapeHtml(text)}</div>
+            </div>
+            <div class="message-avatar user-avatar">👤</div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="message-avatar">🤖</div>
+            <div class="message-bubble">
+                <div class="message-text">${text}</div>
+            </div>
+        `;
+    }
+    
+    messagesContainer.appendChild(messageDiv);
+    
+    // Scroll to bottom with animation
+    messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    const id = 'typing-' + Date.now();
+    typingDiv.id = id;
+    typingDiv.className = 'chat-message bot-message typing-message';
+    typingDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-bubble typing-bubble">
+            <div class="typing-indicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+    });
+    
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    const indicator = document.getElementById(id);
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize chat widget on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Chat widget is hidden by default
+    document.getElementById('chatWidget').style.display = 'none';
+});
+</script>

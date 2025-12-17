@@ -2,6 +2,7 @@
 Flask Application - Log Analytics with Six Agents
 """
 from flask import Flask, render_template, request, jsonify, send_from_directory
+from datetime import datetime
 import os
 import io
 from pathlib import Path
@@ -15,6 +16,7 @@ from agents.nexus import Nexus
 from agents.oracle import Oracle
 from agents.cipher import Cipher
 from agents.prism import Prism
+from agents.chat_assistant import ChatAssistant
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_UPLOAD_SIZE
@@ -26,6 +28,7 @@ nexus = Nexus(config.INDEX_DIR, ledger)
 oracle = Oracle(nexus)
 cipher = Cipher(ledger)
 prism = Prism(ledger)
+chat_assistant = ChatAssistant(ledger)
 
 
 @app.route('/')
@@ -441,7 +444,6 @@ def execute_plugin_route(plugin_id):
             if result.get('success'):
                 try:
                     import os
-                    from datetime import datetime
                     
                     content = result.get('content', '')
                     filename = f"plugin_{plugin_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -537,6 +539,37 @@ def process_file(filename, file_bytes, validation):
         events = random.sample(events, config.SAMPLING_THRESHOLD)
     
     return events
+
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """AI Chat Assistant endpoint"""
+    try:
+        data = request.json
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return jsonify({
+                'success': False,
+                'error': 'Message cannot be empty'
+            }), 400
+        
+        # Process message with chat assistant
+        response_text = chat_assistant.process_message(user_message)
+        
+        return jsonify({
+            'success': True,
+            'response': response_text,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Chat error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to process message',
+            'details': str(e)
+        }), 500
 
 
 if __name__ == '__main__':
