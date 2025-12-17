@@ -81,7 +81,15 @@ class ChatAssistant:
         return any(word in msg for word in ['plugin', 'fetch data', 'azure', 's3', 'api', 'webhook'])
     
     def _is_specific_log_search(self, msg):
-        return 'show me' in msg or 'find' in msg or 'search for' in msg
+        search_patterns = ['show me', 'give me', 'get me', 'find', 'search for', 'search', 'look for', 'display', 'list']
+        # Check if any search pattern is followed by potential log-related terms
+        for pattern in search_patterns:
+            if pattern in msg:
+                # Check if there are additional words after the pattern (indicating what to search)
+                words_after = msg.split(pattern)[-1].strip().split()
+                if len(words_after) > 0:
+                    return True
+        return False
     
     def _is_help_request(self, msg):
         return any(word in msg for word in ['help', 'guide', 'how', 'what can you', 'what do you'])
@@ -471,7 +479,7 @@ class ChatAssistant:
     def _extract_search_terms(self, query):
         """Extract search keywords from user query"""
         # Remove common question words but keep important terms
-        stop_words = ['show', 'me', 'find', 'search', 'for', 'get', 'display', 'the', 'a', 'an', 'of', 'in', 'to', 'and']
+        stop_words = ['show', 'me', 'find', 'search', 'for', 'get', 'give', 'display', 'list', 'look', 'the', 'a', 'an', 'of', 'in', 'to', 'and', 'all', 'my']
         
         # Clean and split query
         words = query.lower().split()
