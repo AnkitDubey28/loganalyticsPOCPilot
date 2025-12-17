@@ -149,9 +149,45 @@ function displaySearchResults(results) {
             </div>
         `;
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
+
+// Auto-execute search from URL parameters (e.g., from chat assistant links)
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('query');
+    const level = urlParams.get('level');
+    const service = urlParams.get('service');
+    
+    // If query parameter exists, auto-fill and execute search
+    if (query || level || service) {
+        const queryInput = document.getElementById('queryInput');
+        
+        if (query) {
+            queryInput.value = query.replace(/\+/g, ' ');
+        } else {
+            // If no query but have filters, use wildcard
+            queryInput.value = '*';
+        }
+        
+        if (level) {
+            document.getElementById('levelFilter').value = level;
+            currentFilters.level = level;
+        }
+        if (service) {
+            document.getElementById('serviceFilter').value = service;
+            currentFilters.service = service;
+        }
+        
+        // Auto-execute the search after a short delay to ensure everything is loaded
+        setTimeout(() => {
+            const form = document.getElementById('searchForm');
+            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+            form.dispatchEvent(submitEvent);
+        }, 100);
+    }
+});
 </script>
 {% endblock %}
