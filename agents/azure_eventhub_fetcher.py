@@ -4,9 +4,9 @@ Fetches logs from Azure Event Hub with proper timeout handling
 
 Features:
 - Connection via SAS connection string
+- Uses AmqpOverWebsocket transport for better connectivity
 - Proper timeout after max_wait_time seconds
 - Saves to incoming directory as JSON
-- Graceful shutdown
 """
 
 import json
@@ -38,7 +38,7 @@ class AzureEventHubFetcher:
 
     def fetch_events(self, progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
         try:
-            from azure.eventhub import EventHubConsumerClient
+            from azure.eventhub import EventHubConsumerClient, TransportType
         except ImportError:
             return {'success': False, 'error': 'azure-eventhub not installed. Run: pip install azure-eventhub'}
 
@@ -53,7 +53,8 @@ class AzureEventHubFetcher:
             client = EventHubConsumerClient.from_connection_string(
                 conn_str=self.connection_str,
                 consumer_group=self.consumer_group,
-                eventhub_name=self.eventhub_name
+                eventhub_name=self.eventhub_name,
+                transport_type=TransportType.AmqpOverWebsocket
             )
 
             if progress_callback:
