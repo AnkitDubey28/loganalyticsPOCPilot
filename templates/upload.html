@@ -47,8 +47,8 @@
         <!-- Cloud API Form -->
         <form id="cloudApiForm" class="plugin-form active">
             <div class="form-group">
-                <label for="cloudProvider">Cloud Provider *</label>
-                <select id="cloudProvider" name="cloudProvider" required>
+                <label for="cloudProvider">Cloud Provider</label>
+                <select id="cloudProvider" name="cloudProvider">
                     <option value="">Select Cloud Provider</option>
                     <option value="aws">AWS</option>
                     <option value="azure">Azure</option>
@@ -59,31 +59,22 @@
 
             <div id="cloudSpecificFields"></div>
 
-            <div class="form-group">
-                <label for="cloudPluginName">Plugin Name *</label>
-                <input type="text" id="cloudPluginName" name="pluginName" placeholder="e.g., AWS Production Logs" required>
-            </div>
-
             <button type="submit" class="btn btn-primary">💾 Save Cloud API Plugin</button>
         </form>
 
         <!-- Webhook Form -->
         <form id="webhookForm" class="plugin-form">
             <div class="form-group">
-                <label for="webhookName">Webhook Name *</label>
-                <input type="text" id="webhookName" name="webhookName" placeholder="e.g., CloudWatch Webhook" required>
-            </div>
-            <div class="form-group">
-                <label for="webhookUrl">Webhook URL *</label>
-                <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://example.com/webhook" required>
+                <label for="webhookUrl">Webhook URL</label>
+                <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://example.com/webhook">
             </div>
             <div class="form-group">
                 <label for="webhookSecret">Secret/Token</label>
                 <input type="password" id="webhookSecret" name="webhookSecret" placeholder="Optional authentication token">
             </div>
             <div class="form-group">
-                <label for="webhookMethod">HTTP Method *</label>
-                <select id="webhookMethod" name="webhookMethod" required>
+                <label for="webhookMethod">HTTP Method</label>
+                <select id="webhookMethod" name="webhookMethod">
                     <option value="POST">POST</option>
                     <option value="GET">GET</option>
                 </select>
@@ -94,20 +85,20 @@
         <!-- REST API Form -->
         <form id="apiForm" class="plugin-form">
             <div class="form-group">
-                <label for="apiName">Data Source Name *</label>
-                <input type="text" id="apiName" name="apiName" placeholder="e.g., Production Logs Storage" required>
+                <label for="apiName">Data Source Name</label>
+                <input type="text" id="apiName" name="apiName" placeholder="e.g., Production Logs Storage">
             </div>
             <div class="form-group">
-                <label for="apiEndpoint">Data Source URL *</label>
-                <input type="url" id="apiEndpoint" name="apiEndpoint" placeholder="https://your-storage-url.com/logs/file.log" required>
+                <label for="apiEndpoint">Data Source URL</label>
+                <input type="url" id="apiEndpoint" name="apiEndpoint" placeholder="https://your-storage-url.com/logs/file.log">
             </div>
             <div class="form-group">
-                <label for="apiKey">Access Token/Key *</label>
+                <label for="apiKey">Access Token/Key</label>
                 <input type="password" id="apiKey" name="apiKey" placeholder="SAS token or Access key (optional)">
             </div>
             <div class="form-group">
-                <label for="apiMethod">HTTP Method *</label>
-                <select id="apiMethod" name="apiMethod" required>
+                <label for="apiMethod">HTTP Method</label>
+                <select id="apiMethod" name="apiMethod">
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
                 </select>
@@ -118,24 +109,24 @@
         <!-- SharePoint Form -->
         <form id="sharepointForm" class="plugin-form">
             <div class="form-group">
-                <label for="sharepointName">SharePoint Name *</label>
-                <input type="text" id="sharepointName" name="sharepointName" placeholder="e.g., Log Documents" required>
+                <label for="sharepointName">SharePoint Name</label>
+                <input type="text" id="sharepointName" name="sharepointName" placeholder="e.g., Log Documents">
             </div>
             <div class="form-group">
-                <label for="sharepointUrl">SharePoint Site URL *</label>
-                <input type="url" id="sharepointUrl" name="sharepointUrl" placeholder="https://company.sharepoint.com/sites/logs" required>
+                <label for="sharepointUrl">SharePoint Site URL</label>
+                <input type="url" id="sharepointUrl" name="sharepointUrl" placeholder="https://company.sharepoint.com/sites/logs">
             </div>
             <div class="form-group">
-                <label for="sharepointFolder">Folder Path *</label>
-                <input type="text" id="sharepointFolder" name="sharepointFolder" placeholder="/Shared Documents/Logs" required>
+                <label for="sharepointFolder">Folder Path</label>
+                <input type="text" id="sharepointFolder" name="sharepointFolder" placeholder="/Shared Documents/Logs">
             </div>
             <div class="form-group">
-                <label for="sharepointClientId">Client ID *</label>
-                <input type="text" id="sharepointClientId" name="sharepointClientId" placeholder="Azure AD Client ID" required>
+                <label for="sharepointClientId">Client ID</label>
+                <input type="text" id="sharepointClientId" name="sharepointClientId" placeholder="Azure AD Client ID">
             </div>
             <div class="form-group">
-                <label for="sharepointSecret">Client Secret *</label>
-                <input type="password" id="sharepointSecret" name="sharepointSecret" placeholder="Azure AD Client Secret" required>
+                <label for="sharepointSecret">Client Secret</label>
+                <input type="password" id="sharepointSecret" name="sharepointSecret" placeholder="Azure AD Client Secret">
             </div>
             <button type="submit" class="btn btn-primary">💾 Save SharePoint Plugin</button>
         </form>
@@ -184,12 +175,12 @@
 const cloudFields = {
     aws: `
         <div class="form-group">
-            <label for="awsAccessKey">AWS Access Key ID *</label>
-            <input type="text" id="awsAccessKey" name="awsAccessKey" placeholder="AKIAIOSFODNN7EXAMPLE" required>
+            <label for="awsAccessKey">AWS Access Key ID</label>
+            <input type="text" id="awsAccessKey" name="awsAccessKey" placeholder="AKIAIOSFODNN7EXAMPLE">
         </div>
         <div class="form-group">
-            <label for="awsSecretKey">AWS Secret Access Key *</label>
-            <input type="password" id="awsSecretKey" name="awsSecretKey" placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" required>
+            <label for="awsSecretKey">AWS Secret Access Key</label>
+            <input type="password" id="awsSecretKey" name="awsSecretKey" placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY">
         </div>
         <div class="form-group">
             <label for="awsSessionToken">AWS Session Token (Optional)</label>
@@ -198,19 +189,19 @@ const cloudFields = {
         </div>
         <input type="hidden" id="awsService" name="awsService" value="cloudwatch">
         <div class="form-group">
-            <label for="awsLogGroup">CloudWatch Log Group Name *</label>
-            <input type="text" id="awsLogGroup" name="awsLogGroup" placeholder="/aws/lambda/my-function" required>
+            <label for="awsLogGroup">CloudWatch Log Group Name</label>
+            <input type="text" id="awsLogGroup" name="awsLogGroup" placeholder="/aws/lambda/my-function">
         </div>
     `,
     azure: `
         <div class="form-group">
-            <label for="azureEventHubConnectionString">Event Hub Connection String *</label>
-            <input type="password" id="azureEventHubConnectionString" name="azureEventHubConnectionString" placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..." required>
+            <label for="azureEventHubConnectionString">Event Hub Connection String</label>
+            <input type="password" id="azureEventHubConnectionString" name="azureEventHubConnectionString" placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...">
             <small class="help-text">Full connection string with SharedAccessKey from Azure Portal</small>
         </div>
         <div class="form-group">
-            <label for="azureEventHubName">Event Hub Name *</label>
-            <input type="text" id="azureEventHubName" name="azureEventHubName" placeholder="my-event-hub" required>
+            <label for="azureEventHubName">Event Hub Name</label>
+            <input type="text" id="azureEventHubName" name="azureEventHubName" placeholder="my-event-hub">
         </div>
         <div class="form-group">
             <label for="azureEventHubConsumerGroup">Consumer Group</label>
@@ -221,46 +212,46 @@ const cloudFields = {
     `,
     gcp: `
         <div class="form-group">
-            <label for="gcpProjectId">GCP Project ID *</label>
-            <input type="text" id="gcpProjectId" name="gcpProjectId" placeholder="my-project-123456" required>
+            <label for="gcpProjectId">GCP Project ID</label>
+            <input type="text" id="gcpProjectId" name="gcpProjectId" placeholder="my-project-123456">
         </div>
         <div class="form-group">
-            <label for="gcpServiceAccount">Service Account Email *</label>
-            <input type="email" id="gcpServiceAccount" name="gcpServiceAccount" placeholder="service@project.iam.gserviceaccount.com" required>
+            <label for="gcpServiceAccount">Service Account Email</label>
+            <input type="email" id="gcpServiceAccount" name="gcpServiceAccount" placeholder="service@project.iam.gserviceaccount.com">
         </div>
         <div class="form-group">
-            <label for="gcpPrivateKey">Private Key (JSON) *</label>
-            <textarea id="gcpPrivateKey" name="gcpPrivateKey" rows="4" placeholder="Paste your service account JSON key" required></textarea>
+            <label for="gcpPrivateKey">Private Key (JSON)</label>
+            <textarea id="gcpPrivateKey" name="gcpPrivateKey" rows="4" placeholder="Paste your service account JSON key"></textarea>
         </div>
         <div class="form-group">
-            <label for="gcpService">GCP Service *</label>
-            <select id="gcpService" name="gcpService" required>
+            <label for="gcpService">GCP Service</label>
+            <select id="gcpService" name="gcpService">
                 <option value="logging">Cloud Logging</option>
                 <option value="storage">Cloud Storage</option>
                 <option value="pubsub">Pub/Sub</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="gcpLogName">Log Name/Bucket *</label>
-            <input type="text" id="gcpLogName" name="gcpLogName" placeholder="projects/my-project/logs/my-log" required>
+            <label for="gcpLogName">Log Name/Bucket</label>
+            <input type="text" id="gcpLogName" name="gcpLogName" placeholder="projects/my-project/logs/my-log">
         </div>
     `,
     other: `
         <div class="form-group">
-            <label for="otherApiEndpoint">API Endpoint *</label>
-            <input type="url" id="otherApiEndpoint" name="otherApiEndpoint" placeholder="https://api.cloudprovider.com/logs" required>
+            <label for="otherApiEndpoint">API Endpoint</label>
+            <input type="url" id="otherApiEndpoint" name="otherApiEndpoint" placeholder="https://api.cloudprovider.com/logs">
         </div>
         <div class="form-group">
-            <label for="otherAuthType">Authentication Type *</label>
-            <select id="otherAuthType" name="otherAuthType" required>
+            <label for="otherAuthType">Authentication Type</label>
+            <select id="otherAuthType" name="otherAuthType">
                 <option value="bearer">Bearer Token</option>
                 <option value="basic">Basic Auth</option>
                 <option value="apikey">API Key</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="otherCredentials">Credentials *</label>
-            <input type="password" id="otherCredentials" name="otherCredentials" placeholder="Your token/key" required>
+            <label for="otherCredentials">Credentials</label>
+            <input type="password" id="otherCredentials" name="otherCredentials" placeholder="Your token/key">
         </div>
     `
 };
