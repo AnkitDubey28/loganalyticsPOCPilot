@@ -83,7 +83,8 @@ def upload():
                     continue
                 
                 # Save raw file
-                raw_path = os.path.join(config.RAW_DIR, filename)
+                    incoming_path = os.path.join(config.INCOMING_DIR, filename)
+                    os.makedirs(config.INCOMING_DIR, exist_ok=True)
                 with open(raw_path, 'wb') as f:
                     f.write(file_bytes)
                 
@@ -446,11 +447,13 @@ def execute_plugin_route(plugin_id):
                     import os
                     
                     content = result.get('content', '')
-                    filename = f"plugin_{plugin_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+                    source = result.get('source', 'plugin')
+                    filename = f"{source}_{plugin_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                     
-                    # Save to raw directory
-                    raw_path = os.path.join(config.RAW_DIR, filename)
-                    with open(raw_path, 'w', encoding='utf-8') as f:
+                    # Save to incoming directory as JSON for UI processing
+                    incoming_path = os.path.join(config.INCOMING_DIR, filename)
+                    os.makedirs(config.INCOMING_DIR, exist_ok=True)
+                    with open(incoming_path, 'w', encoding='utf-8') as f:
                         f.write(content)
                     
                     # Process the file
