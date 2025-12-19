@@ -5,14 +5,14 @@ Fetches logs from AWS CloudWatch Logs using boto3 SDK
 Features:
 - Auto-discover all log groups if none specified
 - IAM credentials support (Access Key, Secret Key, Session Token)
-- Time-based filtering (last 24 hours by default)
+- Fetches all available logs (no time filtering)
 - Saves to incoming directory as JSON for UI processing
 """
 
 import json
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional, Any, Callable
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class AWSCloudWatchFetcher:
         self.secret_key = config.get('awsSecretKey', '')
         self.session_token = config.get('awsSessionToken', '')
         self.region = config.get('awsRegion', 'us-east-1')
-        self.log_group = config.get('awsLogGroup', '')  # Optional now
+        self.log_group = config.get('awsLogGroup', '')  # Optional
         self.limit = int(config.get('awsLimit', 1000))
         self.all_logs: List[Dict] = []
         self.client = None
@@ -51,15 +51,13 @@ class AWSCloudWatchFetcher:
             logger.error(f"Error listing log groups: {e}")
         return log_groups
 
-    def _fetch_logs_from_group(self, log_group: str, start_time: int, end_time: int) -> List[Dict]:
+    def _fetch_logs_from_group(self, log_group: str) -> List[Dict]:
         """Fetch logs from a specific log group."""
         logs = []
         try:
             paginator = self.client.get_paginator('filter_log_events')
             params = {
                 'logGroupName': log_group,
-                'startTime': start_time,
-                'endTime': end_time,
                 'limit': min(self.limit, 100)
             }
             
@@ -89,10 +87,6 @@ class AWSCloudWatchFetcher:
                 progress_callback(10, "Connecting to AWS CloudWatch...")
 
             self.client = self._get_boto3_client()
-            
-            # Time range: last 24 hours
-            end_time = int(datetime.now().timestamp() * 1000)
-            start_time = int((datetime.now() - timedelta(hours=24)).timestamp() * 1000)
 
             # Get log groups to fetch from
             if self.log_group:
@@ -115,7 +109,7 @@ class AWSCloudWatchFetcher:
                     pct = 30 + int((idx / total_groups) * 60)
                     progress_callback(pct, f"Fetching from {group}...")
                 
-                logs = self._fetch_logs_from_group(group, start_time, end_time)
+                logs = self._fetch_logs_from_group(group)
                 self.all_logs.extend(logs)
                 
                 if len(self.all_logs) >= self.limit:
