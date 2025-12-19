@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 echo "Stopping Flask..."
 if [ -f ".flask.pid" ]; then
     PID=$(cat .flask.pid)

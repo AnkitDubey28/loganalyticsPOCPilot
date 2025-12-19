@@ -1,5 +1,5 @@
 """
-Flask Application - Log Analytics with Six Agents
+LogSphere Agent - Cloud Log Analytics with Multi-Agent Pipeline
 """
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from datetime import datetime
@@ -403,7 +403,7 @@ def delete_plugin(plugin_id):
 # Plugin execution progress storage
 plugin_progress = {}
 
-@app.route('/api/plugins/<int:plugin_id>/execute', methods=['POST'])
+@app.route('/api/plugins/<int:plugin_id>/execute', methods=['GET', 'POST'])
 def execute_plugin_route(plugin_id):
     """Execute a plugin to fetch data"""
     try:

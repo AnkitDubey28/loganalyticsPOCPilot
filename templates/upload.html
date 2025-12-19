@@ -180,6 +180,15 @@
 
 {% block scripts %}
 <script>
+// Toggle Event Hub fields visibility
+function toggleEventHubFields() {
+    const service = document.getElementById('azureService')?.value;
+    const eventHubFields = document.getElementById('eventHubFields');
+    if (eventHubFields) {
+        eventHubFields.style.display = (service === 'eventhub') ? 'block' : 'none';
+    }
+}
+
 // Cloud-specific field templates
 const cloudFields = {
     aws: `
@@ -190,6 +199,11 @@ const cloudFields = {
         <div class="form-group">
             <label for="awsSecretKey">AWS Secret Access Key *</label>
             <input type="password" id="awsSecretKey" name="awsSecretKey" placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" required>
+        </div>
+        <div class="form-group">
+            <label for="awsSessionToken">AWS Session Token (Optional)</label>
+            <input type="password" id="awsSessionToken" name="awsSessionToken" placeholder="Temporary session token (for STS/assumed roles)">
+            <small class="help-text">Required when using temporary credentials from STS</small>
         </div>
         <div class="form-group">
             <label for="awsRegion">AWS Region *</label>
@@ -232,7 +246,7 @@ const cloudFields = {
         </div>
         <div class="form-group">
             <label for="azureService">Azure Service *</label>
-            <select id="azureService" name="azureService" required>
+            <select id="azureService" name="azureService" required onchange="toggleEventHubFields()">
                 <option value="monitor">Azure Monitor</option>
                 <option value="storage">Storage Account</option>
                 <option value="eventhub">Event Hub</option>
@@ -241,6 +255,21 @@ const cloudFields = {
         <div class="form-group">
             <label for="azureResourceGroup">Resource Group *</label>
             <input type="text" id="azureResourceGroup" name="azureResourceGroup" placeholder="my-resource-group" required>
+        </div>
+        <div id="eventHubFields" style="display: none;">
+            <div class="form-group">
+                <label for="azureEventHubConnectionString">Event Hub Connection String</label>
+                <input type="password" id="azureEventHubConnectionString" name="azureEventHubConnectionString" placeholder="Endpoint=sb://...">
+                <small class="help-text">Full connection string with SharedAccessKey</small>
+            </div>
+            <div class="form-group">
+                <label for="azureEventHubName">Event Hub Name</label>
+                <input type="text" id="azureEventHubName" name="azureEventHubName" placeholder="my-event-hub">
+            </div>
+            <div class="form-group">
+                <label for="azureEventHubConsumerGroup">Consumer Group</label>
+                <input type="text" id="azureEventHubConsumerGroup" name="azureEventHubConsumerGroup" placeholder="$Default" value="$Default">
+            </div>
         </div>
     `,
     gcp: `

@@ -1,6 +1,6 @@
-﻿#!/bin/bash
+#!/bin/bash
 echo "========================================"
-echo "  Log Analytics Platform - Starting"
+echo "  LogSphere Agent - Starting"
 echo "========================================"
 echo ""
 echo "[1/4] Checking Python..."

@@ -3,7 +3,7 @@
 # Run this once before starting the application
 
 echo "========================================"
-echo "  Log Analytics - Setup"
+echo "  LogSphere Agent - Setup"
 echo "========================================"
 echo ""
 
