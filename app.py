@@ -1,4 +1,4 @@
-"""
+﻿"""
 LogSphere Agent - Cloud Log Analytics with Multi-Agent Pipeline
 """
 from flask import Flask, render_template, request, jsonify, send_from_directory
@@ -83,8 +83,8 @@ def upload():
                     continue
                 
                 # Save raw file
-                    incoming_path = os.path.join(config.INCOMING_DIR, filename)
-                    os.makedirs(config.INCOMING_DIR, exist_ok=True)
+                raw_path = os.path.join(config.RAW_DIR, filename)
+
                 with open(raw_path, 'wb') as f:
                     f.write(file_bytes)
                 
